@@ -29,3 +29,4 @@ npm run build    # outputs to dist/
 - Notes: drop a PDF in `public/pdfs/` and a markdown file in `src/content/notes/` (copy an existing one for the frontmatter).
 - Writing: markdown files in `src/content/writing/`.
 - About page: `src/pages/about.astro`.
+- **All site wording** (headings, intros, about bio, footer) lives in one file: `src/data/copy.json`. Edit it there, or in `/admin` under **Site Text**.

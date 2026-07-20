@@ -1,14 +1,15 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import copy from '../../data/copy.json';
 
 const posts = (await getCollection('writing')).sort((a, b) => +b.data.date - +a.data.date);
 const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 ---
 <Base title="Writing — MathCosine" description="Essays and other things I write.">
   <section class="wrap page-head">
-    <h1 data-reveal>Writing</h1>
-    <p class="lede" data-reveal>Things I wrote that aren't lecture notes. Opinions are my own; theorems are not.</p>
+    <h1 data-reveal>{copy.writing.heading}</h1>
+    <p class="lede" data-reveal>{copy.writing.intro}</p>
   </section>
   <section class="wrap list">
     {posts.map((p) => (

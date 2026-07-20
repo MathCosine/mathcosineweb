@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import copy from '../data/copy.json';
 
 const notes = (await getCollection('notes')).sort((a, b) => +b.data.date - +a.data.date).slice(0, 3);
 const posts = (await getCollection('writing')).sort((a, b) => +b.data.date - +a.data.date).slice(0, 2);
@@ -8,15 +9,12 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: '
 ---
 <Base title="MathCosine — notes, writing, mathematics">
   <section class="hero wrap">
-    <p class="mono kicker" data-reveal>// hello, I go by</p>
-    <h1 data-reveal>Math<em>Cosine</em></h1>
-    <p class="lede" data-reveal>
-      I take unreasonably thorough notes in my college courses and put them here,
-      free for anyone to read. Sometimes I write about other things too.
-    </p>
+    <p class="mono kicker" data-reveal>{copy.home.kicker}</p>
+    <h1 data-reveal>{copy.home.heading_plain}<em>{copy.home.heading_accent}</em></h1>
+    <p class="lede" data-reveal>{copy.home.lede}</p>
     <div class="hero-actions" data-reveal>
-      <a class="btn" href="/notes/">Browse the notes</a>
-      <a class="btn ghost" href="/about/">Who am I?</a>
+      <a class="btn" href="/notes/">{copy.home.notes_button}</a>
+      <a class="btn ghost" href="/about/">{copy.home.about_button}</a>
     </div>
 
     <svg class="hero-wave" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
@@ -27,12 +25,12 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: '
         </animateMotion>
       </circle>
     </svg>
-    <p class="mono axis-label">y = cos(x) — traced live, obviously</p>
+    <p class="mono axis-label">{copy.home.wave_caption}</p>
   </section>
 
   <section class="wrap section">
     <div class="section-head" data-reveal>
-      <h2>Latest notes</h2>
+      <h2>{copy.home.latest_notes_heading}</h2>
       <a class="mono see-all" href="/notes/">all notes →</a>
     </div>
     <div class="note-grid">
@@ -49,7 +47,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: '
 
   <section class="wrap section">
     <div class="section-head" data-reveal>
-      <h2>Recent writing</h2>
+      <h2>{copy.home.recent_writing_heading}</h2>
       <a class="mono see-all" href="/writing/">all posts →</a>
     </div>
     {posts.map((p) => (

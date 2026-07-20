@@ -10,6 +10,57 @@ site_url: https://mathcosine.netlify.app
 logo_url: https://mathcosine.netlify.app/favicon.svg
 
 collections:
+  - name: "site"
+    label: "Site Text"
+    files:
+      - name: "copy"
+        label: "All page text (headings, intros, about, footer)"
+        file: "src/data/copy.json"
+        fields:
+          - label: "Home page"
+            name: "home"
+            widget: "object"
+            fields:
+              - { label: "Small line above the big title", name: "kicker", widget: "string" }
+              - { label: "Big title (first part, black)", name: "heading_plain", widget: "string" }
+              - { label: "Big title (second part, blue italic)", name: "heading_accent", widget: "string" }
+              - { label: "Intro paragraph", name: "lede", widget: "text" }
+              - { label: "Notes button label", name: "notes_button", widget: "string" }
+              - { label: "About button label", name: "about_button", widget: "string" }
+              - { label: "Caption under the wave", name: "wave_caption", widget: "string" }
+              - { label: "'Latest notes' heading", name: "latest_notes_heading", widget: "string" }
+              - { label: "'Recent writing' heading", name: "recent_writing_heading", widget: "string" }
+          - label: "Notes page"
+            name: "notes"
+            widget: "object"
+            fields:
+              - { label: "Heading", name: "heading", widget: "string" }
+              - { label: "Intro", name: "intro", widget: "text" }
+          - label: "Writing page"
+            name: "writing"
+            widget: "object"
+            fields:
+              - { label: "Heading", name: "heading", widget: "string" }
+              - { label: "Intro", name: "intro", widget: "text" }
+          - label: "About page"
+            name: "about"
+            widget: "object"
+            fields:
+              - { label: "Heading", name: "heading", widget: "string" }
+              - { label: "Bio paragraphs", name: "paragraphs", widget: "list", field: { label: "Paragraph", name: "paragraph", widget: "text" } }
+              - label: "Facts (the little list at the bottom)"
+                name: "facts"
+                widget: "list"
+                fields:
+                  - { label: "Label", name: "label", widget: "string" }
+                  - { label: "Value", name: "value", widget: "string" }
+          - label: "Footer"
+            name: "footer"
+            widget: "object"
+            fields:
+              - { label: "Left text", name: "left", widget: "string" }
+              - { label: "Right text", name: "right", widget: "string" }
+
   - name: "notes"
     label: "Course Notes"
     label_singular: "Note"

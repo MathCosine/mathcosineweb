@@ -1,5 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
+import copy from '../data/copy.json';
+const isEmail = (v: string) => v.includes('@') && !v.includes(' ');
 ---
 <Base title="About — MathCosine">
   <section class="wrap about">
@@ -11,26 +13,18 @@ import Base from '../layouts/Base.astro';
       </svg>
     </div>
     <div class="bio">
-      <p class="mono kicker" data-reveal>// about</p>
-      <h1 data-reveal>Hi, I'm MathCosine.</h1>
+      <p class="mono kicker" data-reveal>about</p>
+      <h1 data-reveal>{copy.about.heading}</h1>
       <div class="prose" data-reveal>
-        <p>
-          I'm a college student who takes notes the way some people play video games —
-          compulsively and slightly too competitively. This site is where those notes live,
-          along with essays and whatever else I feel like publishing.
-        </p>
-        <p>
-          Everything here is free. If my notes helped you pass an exam, that's the whole point.
-        </p>
-        <p class="edit-hint mono">
-          (Edit this page from <code>/admin</code> or <code>src/pages/about.astro</code> —
-          replace it with your real bio, links, courses, whatever you like.)
-        </p>
+        {copy.about.paragraphs.map((p) => <p>{p}</p>)}
       </div>
       <ul class="facts" data-reveal>
-        <li><span class="mono">studying</span> Mathematics (put your major here)</li>
-        <li><span class="mono">favorite theorem</span> your call — mine's the Dominated Convergence Theorem</li>
-        <li><span class="mono">contact</span> <a href="mailto:mathtomn@gmail.com">mathtomn@gmail.com</a></li>
+        {copy.about.facts.map((f) => (
+          <li>
+            <span class="mono">{f.label}</span>
+            {isEmail(f.value) ? <a href={`mailto:${f.value}`}>{f.value}</a> : f.value}
+          </li>
+        ))}
       </ul>
     </div>
   </section>

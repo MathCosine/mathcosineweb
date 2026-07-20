@@ -1,4 +1,5 @@
 ---
+import copy from '../data/copy.json';
 interface Props {
   title: string;
   description?: string;
@@ -52,8 +53,8 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
       <path d="M0 30 C50 -10 100 70 150 30 S250 -10 300 30 S400 70 450 30 S550 -10 600 30 S700 70 750 30 S850 -10 900 30 S1000 70 1050 30 S1150 -10 1200 30" />
     </svg>
     <div class="wrap footer-inner">
-      <p class="mono">f(x) = cos(x) · <span id="year"></span></p>
-      <p>Made by hand, one lecture at a time.</p>
+      <p class="mono">{copy.footer.left} · <span id="year"></span></p>
+      <p>{copy.footer.right}</p>
     </div>
   </footer>
 
@@ -95,11 +96,11 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
       font-family: var(--sans);
       font-size: 1.0625rem;
       line-height: 1.65;
-      /* faint graph-paper grid, like an engineering pad */
+      /* whisper of a graph-paper grid */
       background-image:
-        linear-gradient(var(--rule) 1px, transparent 1px),
-        linear-gradient(90deg, var(--rule) 1px, transparent 1px);
-      background-size: 56px 56px;
+        linear-gradient(rgba(184, 168, 130, 0.13) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 168, 130, 0.13) 1px, transparent 1px);
+      background-size: 88px 88px;
       background-attachment: fixed;
     }
     ::selection { background: var(--gold); color: var(--paper); }

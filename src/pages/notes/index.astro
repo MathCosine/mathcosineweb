@@ -1,17 +1,15 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import copy from '../../data/copy.json';
 
 const notes = (await getCollection('notes')).sort((a, b) => +b.data.date - +a.data.date);
 const semesters = [...new Set(notes.map((n) => n.data.semester))];
 ---
 <Base title="Notes — MathCosine" description="Free PDF course notes from my college classes.">
   <section class="wrap page-head">
-    <h1 data-reveal>The notebook shelf</h1>
-    <p class="lede" data-reveal>
-      Every set of notes I've typed up, as a PDF you can preview in the browser or download.
-      Filter by semester if you're hunting for something specific.
-    </p>
+    <h1 data-reveal>{copy.notes.heading}</h1>
+    <p class="lede" data-reveal>{copy.notes.intro}</p>
     <div class="filters mono" data-reveal>
       <button class="filter is-on" data-sem="all">all</button>
       {semesters.map((s) => <button class="filter" data-sem={s}>{s.toLowerCase()}</button>)}

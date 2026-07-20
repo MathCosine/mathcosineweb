@@ -1,0 +1,36 @@
+{
+  "home": {
+    "kicker": "notes · writing · math",
+    "heading_plain": "Math",
+    "heading_accent": "Cosine",
+    "lede": "I'm a college student. I type up my course notes and post them here as PDFs so anyone can use them. There's also some writing, if you're into that.",
+    "notes_button": "Browse the notes",
+    "about_button": "About me",
+    "wave_caption": "y = cos(x)",
+    "latest_notes_heading": "Latest notes",
+    "recent_writing_heading": "Recent writing"
+  },
+  "notes": {
+    "heading": "Notes",
+    "intro": "Everything I've typed up so far. Click any set to preview the PDF in your browser or download it."
+  },
+  "writing": {
+    "heading": "Writing",
+    "intro": "Non-lecture-note things I felt like publishing."
+  },
+  "about": {
+    "heading": "Hi, I'm MathCosine.",
+    "paragraphs": [
+      "I'm a college student who takes a lot of notes. This site is where they live, along with essays and whatever else I feel like publishing.",
+      "Everything here is free. If my notes helped you pass an exam, that's the whole point."
+    ],
+    "facts": [
+      { "label": "studying", "value": "Mathematics (put your major here)" },
+      { "label": "contact", "value": "mathtomn@gmail.com" }
+    ]
+  },
+  "footer": {
+    "left": "f(x) = cos(x)",
+    "right": "Made by hand, one lecture at a time."
+  }
+}
