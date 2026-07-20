@@ -1,0 +1,45 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('writing')).sort((a, b) => +b.data.date - +a.data.date);
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+---
+<Base title="Writing — MathCosine" description="Essays and other things I write.">
+  <section class="wrap page-head">
+    <h1 data-reveal>Writing</h1>
+    <p class="lede" data-reveal>Things I wrote that aren't lecture notes. Opinions are my own; theorems are not.</p>
+  </section>
+  <section class="wrap list">
+    {posts.map((p) => (
+      <a class="entry" href={`/writing/${p.slug}/`} data-reveal>
+        <span class="mono date">{fmt(p.data.date)}</span>
+        <div>
+          <h2>{p.data.title}</h2>
+          {p.data.description && <p class="desc">{p.data.description}</p>}
+        </div>
+        <span class="mono arrow">→</span>
+      </a>
+    ))}
+  </section>
+
+  <style>
+    .page-head { padding-block: 4rem 2rem; }
+    h1 { font-size: clamp(2.4rem, 6vw, 4rem); }
+    .lede { color: var(--ink-soft); margin-top: 0.8rem; font-size: 1.15rem; }
+    .list { display: flex; flex-direction: column; padding-bottom: 2rem; }
+    .entry {
+      display: grid; grid-template-columns: 8rem 1fr auto; gap: 1.2rem; align-items: baseline;
+      padding: 1.4rem 0.5rem; border-bottom: 1px dashed var(--rule);
+      text-decoration: none; color: var(--ink);
+      transition: background 0.2s, padding-left 0.25s var(--ease-out);
+    }
+    .entry:hover { background: var(--paper-deep); padding-left: 1.2rem; }
+    .entry h2 { font-size: 1.5rem; }
+    .desc { color: var(--ink-soft); font-size: 0.95rem; margin-top: 0.2rem; }
+    .date { color: var(--ink-soft); }
+    .arrow { color: var(--red); opacity: 0; transform: translateX(-8px); transition: 0.25s var(--ease-out); }
+    .entry:hover .arrow { opacity: 1; transform: none; }
+    @media (max-width: 560px) { .entry { grid-template-columns: 1fr auto; } .date { grid-column: 1 / -1; } }
+  </style>
+</Base>

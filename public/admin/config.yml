@@ -1,0 +1,41 @@
+backend:
+  name: git-gateway
+  branch: main
+
+# PDFs get uploaded here and served from /pdfs/...
+media_folder: "public/pdfs"
+public_folder: "/pdfs"
+
+site_url: https://mathcosine.netlify.app
+logo_url: https://mathcosine.netlify.app/favicon.svg
+
+collections:
+  - name: "notes"
+    label: "Course Notes"
+    label_singular: "Note"
+    folder: "src/content/notes"
+    create: true
+    slug: "{{slug}}"
+    summary: "{{course}} — {{title}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Course code", name: "course", widget: "string", hint: "e.g. MATH 401" }
+      - { label: "Semester", name: "semester", widget: "string", hint: "e.g. Fall 2025" }
+      - { label: "Date", name: "date", widget: "datetime", time_format: false }
+      - { label: "PDF file", name: "pdf", widget: "file", hint: "Upload the notes PDF here" }
+      - { label: "Short description", name: "description", widget: "string", required: false }
+      - { label: "Tags", name: "tags", widget: "list", required: false, default: [] }
+      - { label: "Extra details (shown on the note's page)", name: "body", widget: "markdown", required: false }
+
+  - name: "writing"
+    label: "Writing"
+    label_singular: "Post"
+    folder: "src/content/writing"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime", time_format: false }
+      - { label: "Description", name: "description", widget: "string", required: false }
+      - { label: "Tags", name: "tags", widget: "list", required: false, default: [] }
+      - { label: "Body", name: "body", widget: "markdown" }
