@@ -32,7 +32,7 @@ export const subjects = [
 export const notes = [
   {
     title: "Divisibility of Polynomials",
-    subject: "Competitive Mathematics",
+    subject: "Competitive Math",
     description: "A short synopsis of a lecture held in May 2025 on the divisibility of polynomials I listened to. Rather short and brief; not much content, more problem-based.",
     link: "https://drive.google.com/file/d/1PvDaa9pxbilNjn7R7Fr4XP4-gWM3TL5H/view?usp=sharing",
   },
