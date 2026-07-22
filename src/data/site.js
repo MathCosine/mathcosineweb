@@ -17,7 +17,7 @@ export const site = {
   //     (e.g. public/me.jpg  or  public/me.png)
   //  2. Write its name here with a leading slash:  "/me.jpg"
   //  Until then, a placeholder avatar with your initials is shown.
-  photo: "/profile.svg",
+  photo: "/pfp.jpg",
 
   // ── Your intro paragraph (shown next to your photo) ─────────
   //  Rewrite it however you like. Change "[your school]" to your school.
