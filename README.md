@@ -9,6 +9,7 @@ A clean, static website. No login, no database. You add notes by pasting Google 
 | I want to change… | Edit this file |
 | --- | --- |
 | My **notes** (add / remove / edit) | `src/data/notes.js` |
+| My **"Recent Work"** (research, projects, awards) | `src/data/work.js` |
 | My **"Writing on a Wall" thoughts** | `src/data/wall.js` |
 | My **name, photo, bio, email, tagline** | `src/data/site.js` |
 
@@ -39,7 +40,7 @@ The date uses `YYYY-MM-DD` and is shown nicely (e.g. "Jul 22, 2026").
 1. Put your image in the **`public/`** folder (e.g. `public/me.jpg`).
 2. In `src/data/site.js`, set `photo: "/me.jpg"`.
 
-Until you do, a placeholder "MC" avatar is shown.
+Until you do, a placeholder avatar with your initials is shown. (If a photo ever fails to load, the site falls back to that initials avatar automatically — it will never show a broken image.)
 
 ### How to change any wording
 
@@ -54,6 +55,7 @@ src/
   data/
     site.js        ← your name, photo, bio, email  (EDIT ME)
     notes.js       ← your notes + Google Drive links  (EDIT ME)
+    work.js        ← your "Recent Work" (research, projects, awards)  (EDIT ME)
     wall.js        ← your "Writing on a Wall" thoughts  (EDIT ME)
   layouts/
     Base.astro     ← page shell, fonts, colors

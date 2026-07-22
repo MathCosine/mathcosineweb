@@ -3,8 +3,14 @@ import Base from '../layouts/Base.astro';
 import { site } from '../data/site.js';
 import { subjects, notes } from '../data/notes.js';
 import { wall } from '../data/wall.js';
+import { work } from '../data/work.js';
 
 const validNotes = notes.filter((n) => n && n.title && n.link);
+
+// initials for the fallback monogram avatar (capitals in the name, e.g. "MC")
+const initials = ((site.name.match(/[A-Z]/g) || [site.name[0] || 'M']).slice(0, 2).join('')) || 'MC';
+// only load an <img> if a real photo was set (not the default placeholder path)
+const hasPhoto = !!site.photo && site.photo !== '/profile.svg';
 
 const palette: Record<string, string> = {
   'Competitive Math': '#b7791f',
@@ -34,6 +40,15 @@ function fmtDate(d: string) {
   return isNaN(+t) ? s : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// accepts "2026", "2026-05", or "2026-05-14" and shows it nicely
+function fmtWork(d: string) {
+  const s = String(d);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (/^\d{4}-\d{2}$/.test(s)) return new Date(s + '-01T00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return s;
+}
+const validWork = work.filter((w) => w && w.title);
+
 const socials = Object.entries(site.socials).filter(([, v]) => v);
 ---
 <Base title={`${site.name} — Notes & Portfolio`} description={site.bio}>
@@ -41,7 +56,25 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
   <header class="hero wrap">
     <div class="avatar-wrap" data-reveal style="--rd:0ms">
       <span class="avatar-ring" aria-hidden="true"></span>
-      <img class="avatar" src={site.photo} alt={`${site.name} profile photo`} width="150" height="150" />
+      <div class="avatar avatar-mono" aria-hidden={hasPhoto ? 'true' : 'false'}>
+        <svg viewBox="0 0 400 400" role="img" aria-label={site.name}>
+          <defs>
+            <linearGradient id="ag" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#eef1fb" />
+              <stop offset="1" stop-color="#f7efe1" />
+            </linearGradient>
+          </defs>
+          <rect width="400" height="400" fill="url(#ag)" />
+          <path d="M20 235 C 65 140, 110 140, 155 235 S 245 330, 290 235 S 380 140, 425 235"
+                fill="none" stroke="#23386f" stroke-width="11" stroke-linecap="round" opacity="0.45" />
+          <text x="200" y="205" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+                font-size="150" font-weight="700" fill="#23386f">{initials}</text>
+        </svg>
+      </div>
+      {hasPhoto && (
+        <img class="avatar avatar-photo" src={site.photo} alt={`${site.name} profile photo`}
+             width="150" height="150" onerror="this.remove()" />
+      )}
     </div>
     <div class="hero-text">
       <h1 data-reveal style="--rd:60ms">{site.name}</h1>
@@ -71,6 +104,40 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
       </circle>
     </svg>
   </div>
+
+  <!-- ══ RECENT WORK ═══════════════════════════════════ -->
+  {validWork.length > 0 && (
+    <section class="wrap work-section">
+      <div class="section-head" data-reveal>
+        <h2>Recent Work</h2>
+        <p class="count mono">research · projects · awards</p>
+      </div>
+      <ol class="timeline">
+        {validWork.map((w, i) => (
+          <li class="tl-item" data-reveal style={`--rd:${(i % 6) * 60}ms`}>
+            <div class="tl-marker"><span class="tl-dot"></span></div>
+            <div class="tl-body">
+              <p class="tl-meta mono">
+                <span class="tl-date">{fmtWork(w.date)}</span>
+                {w.type && <span class="tl-type">{w.type}</span>}
+              </p>
+              <h3 class="tl-title">{w.title}</h3>
+              {w.description && <p class="tl-desc">{w.description}</p>}
+              {w.links && w.links.length > 0 && (
+                <p class="tl-links">
+                  {w.links.map((l) => (
+                    <a class="tl-link mono" href={l.url} target="_blank" rel="noopener">{l.label}
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7 M9 7h8v8"/></svg>
+                    </a>
+                  ))}
+                </p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
 
   <!-- ══ NOTES ═════════════════════════════════════════ -->
   <section class="wrap notes-section">
@@ -267,12 +334,14 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
   <style>
     /* ── hero ── */
     .hero { display: grid; grid-template-columns: 150px 1fr; gap: 2.4rem; align-items: start; padding-block: 4.5rem 2rem; }
-    .avatar-wrap { position: relative; width: 150px; height: 150px; }
+    .avatar-wrap { position: relative; width: 150px; height: 150px; animation: float 6s ease-in-out infinite; }
     .avatar {
-      position: relative; z-index: 1; width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
+      position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
       border: 1px solid var(--line); background: var(--surface); box-shadow: 0 10px 26px rgba(25,26,30,0.1);
-      animation: float 6s ease-in-out infinite;
     }
+    .avatar-mono { z-index: 1; }
+    .avatar-mono svg { width: 100%; height: 100%; display: block; }
+    .avatar-photo { z-index: 2; object-fit: cover; }
     .avatar-ring { position: absolute; inset: -7px; border-radius: 50%; border: 1px dashed #cdd4e6; animation: spin 34s linear infinite; }
     @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -351,6 +420,25 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
     .card:hover .card-open svg { transform: scale(1.12); }
 
     .empty { color: var(--muted); text-align: center; padding: 2.5rem 0; }
+
+    /* ── recent work timeline ── */
+    .work-section { padding-block: 2.5rem 1rem; }
+    .timeline { list-style: none; padding: 0; margin-top: 1.4rem; }
+    .tl-item { display: grid; grid-template-columns: 18px 1fr; gap: 1.1rem; }
+    .tl-marker { position: relative; display: flex; justify-content: center; }
+    .tl-marker::before { content: ''; position: absolute; top: 6px; bottom: -0.3rem; width: 2px; background: var(--line); }
+    .tl-item:last-child .tl-marker::before { display: none; }
+    .tl-dot { position: relative; z-index: 1; width: 12px; height: 12px; margin-top: 5px; border-radius: 50%; background: var(--surface); border: 2px solid var(--primary); transition: transform 0.2s var(--ease), background 0.2s, border-color 0.2s; }
+    .tl-item:hover .tl-dot { background: var(--accent); border-color: var(--accent); transform: scale(1.25); }
+    .tl-body { padding-bottom: 1.9rem; }
+    .tl-meta { display: flex; align-items: center; gap: 0.7rem; font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    .tl-type { color: var(--primary); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; background: var(--surface); }
+    .tl-title { font-size: 1.25rem; margin-top: 0.25rem; }
+    .tl-desc { color: var(--muted); margin-top: 0.2rem; max-width: 44rem; }
+    .tl-links { display: flex; gap: 0.9rem; margin-top: 0.6rem; flex-wrap: wrap; }
+    .tl-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; text-decoration: none; color: var(--accent); border-bottom: 1px solid transparent; padding-bottom: 1px; transition: border-color 0.2s, gap 0.2s var(--ease); }
+    .tl-link svg { width: 0.8rem; height: 0.8rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tl-link:hover { border-color: var(--accent); gap: 0.4rem; }
 
     /* ── writing on a wall ── */
     .wall-section { background: #f7f2e6; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-block: 3rem; }
