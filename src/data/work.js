@@ -16,27 +16,12 @@
 
 export const work = [
   {
-    date: "2026-05",
-    type: "Research",
-    title: "Double Star Systems — Astrometric Measurements",
-    description: "Measured separation and position angle for several binary stars; results submitted for publication.",
-    links: [
-      { label: "Paper", url: "https://example.com" },
-    ],
-  },
-  {
-    date: "2026-02",
+    date: "2026-07",
     type: "Project",
-    title: "Built this notes website",
-    description: "A place to share my course notes and writing, free for anyone.",
+    title: "Developed Netifly Astro Website",
+    description: "Created note sharing website.",
     links: [
-      { label: "Site", url: "https://example.com" },
+      { label: "Website", url: "https://mathcosine.netlify.app/" },
     ],
-  },
-  {
-    date: "2025-11",
-    type: "Award",
-    title: "Placed in a national math competition",
-    description: "Replace this with your real work — edit src/data/work.js.",
   },
 ];
