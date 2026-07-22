@@ -21,7 +21,7 @@ export const site = {
 
   // ── Your intro paragraph (shown next to your photo) ─────────
   //  Rewrite it however you like. Change "[your school]" to your school.
-  bio: "Hi, I'm MathCosine, a student at Stanford Online High School. I'm interested in higher mathematics such as analysis, competitive math, and physics, and I'm part of multiple organizations promoting STEM to youth. This website is my portfolio, where my notes are freely available to all.",
+  bio: "Hi, I'm Thomas, a student at Stanford Online High School. I'm interested in higher mathematics such as analysis, competitive math, and physics, and I'm part of multiple organizations promoting STEM to youth. This website is my portfolio, where my notes are freely available to all.",
 
   // ── Optional links ──────────────────────────────────────────
   //  Leave any of these as ""  to hide that icon.
