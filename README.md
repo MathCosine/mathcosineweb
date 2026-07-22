@@ -9,6 +9,7 @@ A clean, static website. No login, no database. You add notes by pasting Google 
 | I want to change… | Edit this file |
 | --- | --- |
 | My **notes** (add / remove / edit) | `src/data/notes.js` |
+| My **"Writing on a Wall" thoughts** | `src/data/wall.js` |
 | My **name, photo, bio, email, tagline** | `src/data/site.js` |
 
 Both files are heavily commented — open them and you'll see exactly what to change. After you edit and commit, Netlify rebuilds the site automatically (about a minute).
@@ -20,6 +21,18 @@ Both files are heavily commented — open them and you'll see exactly what to ch
 3. Open `src/data/notes.js`, copy one of the `{ ... }` blocks, paste it at the top of the list, and fill in your `title`, `subject`, `description`, and paste your link into `link`.
 
 The `subject` must be spelled exactly like one in the `subjects` list at the top of that file (e.g. `"Higher Math"`). To rename or add a subject, edit that `subjects` list.
+
+**Important for the in-page preview:** clicking a note opens the PDF *inside* the site in a preview window (with an "Open in new tab" button). For that preview to show, the Google Drive file's sharing must be set to **"Anyone with the link."** If it isn't, visitors will see a Google "you need access" screen instead.
+
+### How to add a "Writing on a Wall" thought
+
+Open `src/data/wall.js` and paste a new line at the top:
+
+```js
+{ date: "2026-07-22", text: "Whatever you're thinking right now." },
+```
+
+The date uses `YYYY-MM-DD` and is shown nicely (e.g. "Jul 22, 2026").
 
 ### How to add your photo
 
@@ -41,6 +54,7 @@ src/
   data/
     site.js        ← your name, photo, bio, email  (EDIT ME)
     notes.js       ← your notes + Google Drive links  (EDIT ME)
+    wall.js        ← your "Writing on a Wall" thoughts  (EDIT ME)
   layouts/
     Base.astro     ← page shell, fonts, colors
   pages/

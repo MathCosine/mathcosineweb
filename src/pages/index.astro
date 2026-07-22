@@ -2,10 +2,10 @@
 import Base from '../layouts/Base.astro';
 import { site } from '../data/site.js';
 import { subjects, notes } from '../data/notes.js';
+import { wall } from '../data/wall.js';
 
 const validNotes = notes.filter((n) => n && n.title && n.link);
 
-// each subject gets an ink color used for its stripe, dot, and baseline wave
 const palette: Record<string, string> = {
   'Competitive Math': '#b7791f',
   'Higher Math': '#2a4189',
@@ -14,6 +14,25 @@ const palette: Record<string, string> = {
   'Chemistry': '#b83250',
 };
 const colorOf = (s: string) => palette[s] ?? '#6b6b6b';
+
+// pull the Google Drive file id out of a share link so we can preview it in-page
+function driveId(url: string) {
+  const s = String(url);
+  const m = s.match(/\/d\/([^/?#]+)/) || s.match(/[?&]id=([^&]+)/);
+  return m ? m[1] : '';
+}
+const previewUrl = (url: string) => {
+  const id = driveId(url);
+  return id ? `https://drive.google.com/file/d/${id}/preview` : '';
+};
+
+// date like "Jul 22, 2026"; leaves the raw string alone if it can't be parsed
+function fmtDate(d: string) {
+  const s = String(d);
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s + 'T00:00' : s;
+  const t = new Date(iso);
+  return isNaN(+t) ? s : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 const socials = Object.entries(site.socials).filter(([, v]) => v);
 ---
@@ -40,7 +59,6 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
     </div>
   </header>
 
-  <!-- animated cosine divider with a dot tracing the curve -->
   <div class="wave-band" aria-hidden="true">
     <svg class="wave" viewBox="0 0 1200 60" preserveAspectRatio="none">
       <path id="wavepath" d="M0 30 C50 4 100 56 150 30 S250 4 300 30 S400 56 450 30 S550 4 600 30 S700 56 750 30 S850 4 900 30 S1000 56 1050 30 S1150 4 1200 30" />
@@ -79,8 +97,8 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
         const no = String(i + 1).padStart(2, '0');
         return (
           <a class="card" href={n.link} target="_blank" rel="noopener"
-             data-subject={n.subject} data-text={text} data-reveal
-             style={`--sc:${sc}; --rd:${(i % 8) * 55}ms`}>
+             data-subject={n.subject} data-text={text} data-preview={previewUrl(n.link)} data-title={n.title}
+             data-reveal style={`--sc:${sc}; --rd:${(i % 8) * 55}ms`}>
             <div class="card-top mono">
               <span class="card-subject"><span class="dot"></span>{n.subject}</span>
               <span class="card-no">№ {no}</span>
@@ -92,8 +110,8 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
               <svg class="card-wave" viewBox="0 0 140 20" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M0 10 C 12 1, 24 1, 36 10 S 60 19, 72 10 S 96 1, 108 10 S 132 19, 144 10" />
               </svg>
-              <span class="card-open mono">PDF
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7 M9 7h8v8"/></svg>
+              <span class="card-open mono">Preview
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
               </span>
             </div>
           </a>
@@ -104,17 +122,62 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
     <p class="empty" id="empty" hidden>Nothing here yet — try another subject or search.</p>
   </section>
 
+  <!-- ══ WRITING ON A WALL ═════════════════════════════ -->
+  {wall.length > 0 && (
+    <section class="wall-section">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <h2>Writing on a Wall</h2>
+          <p class="count mono">passing thoughts</p>
+        </div>
+        <div class="wall-grid" data-reveal>
+          {wall.map((w, i) => {
+            const rot = ((i * 37) % 5) - 2; // deterministic tilt between -2 and 2 deg
+            return (
+              <figure class="snip">
+                <div class="snip-paper" style={`--rot:${rot}deg`}>
+                  <span class="pin" aria-hidden="true"></span>
+                  <blockquote>{w.text}</blockquote>
+                  <figcaption class="mono">{fmtDate(w.date)}</figcaption>
+                </div>
+              </figure>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  )}
+
   <footer class="wrap site-footer">
     <p class="mono">© <span id="year"></span> {site.name}</p>
     <p class="mono">y = cos(x)</p>
   </footer>
 
+  <!-- ══ DRIVE PREVIEW OVERLAY ═════════════════════════ -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <p class="modal-title" id="modal-title"></p>
+        <a class="modal-btn" id="modal-open" href="#" target="_blank" rel="noopener">
+          Open in new tab
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7 M9 7h8v8"/></svg>
+        </a>
+        <button class="modal-close" id="modal-close" aria-label="Close preview">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12 M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <iframe id="modal-frame" title="Note preview" allow="autoplay"></iframe>
+    </div>
+  </div>
+
   <script>
     document.getElementById('year')!.textContent = String(new Date().getFullYear());
 
+    /* ── search + subject filter ── */
     const search = document.getElementById('search') as HTMLInputElement;
     const chips = document.querySelectorAll<HTMLButtonElement>('.chip');
-    const cards = Array.from(document.querySelectorAll<HTMLElement>('.card'));
+    const cards = Array.from(document.querySelectorAll<HTMLAnchorElement>('.card'));
     const empty = document.getElementById('empty')!;
     const count = document.getElementById('count')!;
     let subject = 'all';
@@ -156,27 +219,61 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
       })
     );
     apply();
+
+    /* ── in-page Drive preview ── */
+    const modal = document.getElementById('modal')!;
+    const backdrop = document.getElementById('modal-backdrop')!;
+    const frame = document.getElementById('modal-frame') as HTMLIFrameElement;
+    const mTitle = document.getElementById('modal-title')!;
+    const mOpen = document.getElementById('modal-open') as HTMLAnchorElement;
+    const mClose = document.getElementById('modal-close') as HTMLButtonElement;
+    let lastFocus: HTMLElement | null = null;
+
+    function openModal(preview: string, view: string, title: string) {
+      frame.src = preview;
+      mTitle.textContent = title;
+      mOpen.href = view;
+      modal.hidden = false;
+      requestAnimationFrame(() => modal.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+      lastFocus = document.activeElement as HTMLElement;
+      mClose.focus();
+    }
+    function closeModal() {
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+      frame.src = '';
+      setTimeout(() => { modal.hidden = true; }, 200);
+      if (lastFocus) lastFocus.focus();
+    }
+
+    cards.forEach((card) =>
+      card.addEventListener('click', (e) => {
+        const preview = card.dataset.preview;
+        if (!preview) return; // not a Drive link → just open the link normally
+        // let people still cmd/ctrl/middle-click to open in a new tab
+        if (e.metaKey || e.ctrlKey || e.shiftKey || (e as MouseEvent).button === 1) return;
+        e.preventDefault();
+        openModal(preview, card.href, card.dataset.title || 'Note');
+      })
+    );
+    backdrop.addEventListener('click', closeModal);
+    mClose.addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
   </script>
 
   <style>
     /* ── hero ── */
-    .hero {
-      display: grid; grid-template-columns: 150px 1fr; gap: 2.4rem;
-      align-items: start; padding-block: 4.5rem 2rem;
-    }
+    .hero { display: grid; grid-template-columns: 150px 1fr; gap: 2.4rem; align-items: start; padding-block: 4.5rem 2rem; }
     .avatar-wrap { position: relative; width: 150px; height: 150px; }
     .avatar {
-      position: relative; z-index: 1;
-      width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
-      border: 1px solid var(--line); background: var(--surface);
-      box-shadow: 0 10px 26px rgba(25,26,30,0.1);
+      position: relative; z-index: 1; width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
+      border: 1px solid var(--line); background: var(--surface); box-shadow: 0 10px 26px rgba(25,26,30,0.1);
       animation: float 6s ease-in-out infinite;
     }
-    .avatar-ring {
-      position: absolute; inset: -7px; border-radius: 50%;
-      border: 1px dashed #cdd4e6;
-      animation: spin 34s linear infinite;
-    }
+    .avatar-ring { position: absolute; inset: -7px; border-radius: 50%; border: 1px dashed #cdd4e6; animation: spin 34s linear infinite; }
     @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -185,33 +282,23 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
     .bio { color: var(--muted); max-width: 42rem; margin-top: 1.1rem; font-size: 1.08rem; }
     .hero-links { display: flex; gap: 0.7rem; margin-top: 1.5rem; flex-wrap: wrap; }
     .btn {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      font-size: 0.92rem; text-decoration: none; color: var(--surface);
-      background: var(--primary); padding: 0.55rem 1rem; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.92rem; text-decoration: none;
+      color: var(--surface); background: var(--primary); padding: 0.55rem 1rem; border-radius: 999px;
       border: 1px solid var(--primary); position: relative; overflow: hidden;
       transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
     }
     .btn svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; z-index: 1; }
-    .btn span, .btn { z-index: 1; }
-    .btn::after {
-      content: ''; position: absolute; inset: 0; background: var(--primary-soft);
-      transform: translateX(-101%); transition: transform 0.3s var(--ease); z-index: 0;
-    }
+    .btn::after { content: ''; position: absolute; inset: 0; background: var(--primary-soft); transform: translateX(-101%); transition: transform 0.3s var(--ease); z-index: 0; }
     .btn:hover { transform: translateY(-2px); box-shadow: 0 9px 20px rgba(35,56,111,0.24); }
     .btn:hover::after { transform: translateX(0); }
     .btn.ghost { background: transparent; color: var(--primary); text-transform: capitalize; }
     .btn.ghost::after { background: #eef1f9; }
-    .btn.ghost:hover { color: var(--primary); }
 
     /* ── animated wave divider ── */
     .wave-band { position: relative; margin-top: 1rem; }
     .wave, .tracer-layer { display: block; width: 100%; height: 44px; }
     .tracer-layer { position: absolute; inset: 0; }
-    .wave path {
-      fill: none; stroke: #d8d3c6; stroke-width: 2;
-      stroke-dasharray: 2600; stroke-dashoffset: 2600;
-      animation: draw 2.6s var(--ease) 0.2s forwards;
-    }
+    .wave path { fill: none; stroke: #d8d3c6; stroke-width: 2; stroke-dasharray: 2600; stroke-dashoffset: 2600; animation: draw 2.6s var(--ease) 0.2s forwards; }
     @keyframes draw { to { stroke-dashoffset: 0; } }
     .tracer { fill: var(--accent); filter: drop-shadow(0 0 3px rgba(192,73,47,0.5)); }
 
@@ -222,63 +309,29 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
     .count { color: var(--muted); font-size: 0.82rem; }
 
     .controls {
-      position: sticky; top: 0; z-index: 5;
-      background: color-mix(in srgb, var(--bg) 92%, transparent);
-      backdrop-filter: blur(6px);
-      padding-block: 1rem; margin-top: 0.8rem;
+      position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(6px); padding-block: 1rem; margin-top: 0.8rem;
       display: flex; flex-direction: column; gap: 0.9rem;
     }
     .search { position: relative; }
     .search svg { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); width: 1.1rem; height: 1.1rem; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; transition: stroke 0.2s; }
-    .search input {
-      width: 100%; font: inherit; font-size: 1rem; color: var(--ink);
-      padding: 0.7rem 1rem 0.7rem 2.6rem;
-      background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
+    .search input { width: 100%; font: inherit; font-size: 1rem; color: var(--ink); padding: 0.7rem 1rem 0.7rem 2.6rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; transition: border-color 0.2s, box-shadow 0.2s; }
     .search input:focus { outline: none; border-color: var(--primary-soft); box-shadow: 0 0 0 3px rgba(35,56,111,0.1); }
     .search:focus-within svg { stroke: var(--primary); }
 
     .chips { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: none; }
     .chips::-webkit-scrollbar { display: none; }
-    .chip {
-      font: inherit; font-size: 0.86rem; white-space: nowrap; cursor: pointer;
-      background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
-      padding: 0.35rem 0.9rem; color: var(--muted);
-      transition: transform 0.15s var(--ease), background 0.2s, color 0.2s, border-color 0.2s;
-    }
+    .chip { font: inherit; font-size: 0.86rem; white-space: nowrap; cursor: pointer; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.35rem 0.9rem; color: var(--muted); transition: transform 0.15s var(--ease), background 0.2s, color 0.2s, border-color 0.2s; }
     .chip:hover { border-color: var(--sc, var(--primary-soft)); color: var(--ink); transform: translateY(-1px); }
     .chip:active { transform: translateY(0) scale(0.97); }
     .chip.is-on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
     /* ── index-card notes ── */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr)); gap: 1.1rem; margin-top: 0.6rem; }
-    .card {
-      position: relative; overflow: hidden;
-      display: flex; flex-direction: column; gap: 0.5rem;
-      background: #fffdf8; border: 1px solid var(--line); border-radius: 4px;
-      padding: 1.3rem 1.3rem 1.15rem; text-decoration: none; color: var(--ink);
-      box-shadow: 0 1px 0 rgba(25,26,30,0.03);
-      transition: transform 0.24s var(--ease), box-shadow 0.24s var(--ease), border-color 0.24s;
-    }
-    /* subject stripe down the left edge */
-    .card::before {
-      content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
-      background: var(--sc); transform: scaleY(0); transform-origin: top;
-      transition: transform 0.3s var(--ease);
-    }
-    /* page-corner fold, grows on hover */
-    .card::after {
-      content: ''; position: absolute; top: 0; right: 0;
-      border-style: solid; border-width: 0 0 0 0;
-      border-color: transparent transparent transparent transparent;
-      transition: border-width 0.26s var(--ease);
-    }
-    .card:hover {
-      transform: translateY(-5px) rotate(-0.5deg);
-      box-shadow: -6px 14px 30px rgba(25,26,30,0.13);
-      border-color: color-mix(in srgb, var(--sc) 40%, var(--line));
-    }
+    .card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 0.5rem; background: #fffdf8; border: 1px solid var(--line); border-radius: 4px; padding: 1.3rem 1.3rem 1.15rem; text-decoration: none; color: var(--ink); box-shadow: 0 1px 0 rgba(25,26,30,0.03); cursor: pointer; transition: transform 0.24s var(--ease), box-shadow 0.24s var(--ease), border-color 0.24s; }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: var(--sc); transform: scaleY(0); transform-origin: top; transition: transform 0.3s var(--ease); }
+    .card::after { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0; border-color: transparent; transition: border-width 0.26s var(--ease); }
+    .card:hover { transform: translateY(-5px) rotate(-0.5deg); box-shadow: -6px 14px 30px rgba(25,26,30,0.13); border-color: color-mix(in srgb, var(--sc) 40%, var(--line)); }
     .card:hover::before { transform: scaleY(1); }
     .card:hover::after { border-width: 0 18px 18px 0; border-color: transparent var(--bg) transparent transparent; box-shadow: -1px 1px 0 var(--line); }
 
@@ -290,19 +343,49 @@ const socials = Object.entries(site.socials).filter(([, v]) => v);
     .card-rule { height: 1px; background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 10px); margin: 0.15rem 0 0.1rem; }
     .card-desc { color: var(--muted); font-size: 0.92rem; }
     .card-foot { margin-top: auto; padding-top: 0.7rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-    .card-wave { width: 60%; max-width: 8rem; height: 16px; opacity: 0.4; transition: opacity 0.24s; }
+    .card-wave { width: 55%; max-width: 7.5rem; height: 16px; opacity: 0.4; transition: opacity 0.24s; }
     .card-wave path { fill: none; stroke: var(--sc); stroke-width: 2; stroke-linecap: round; }
     .card:hover .card-wave { opacity: 0.9; }
-    .card-open { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--accent); font-size: 0.78rem; letter-spacing: 0.04em; }
-    .card-open svg { width: 0.85rem; height: 0.85rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.24s var(--ease); }
-    .card:hover .card-open svg { transform: translate(2px, -2px); }
+    .card-open { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--accent); font-size: 0.78rem; letter-spacing: 0.04em; }
+    .card-open svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.24s var(--ease); }
+    .card:hover .card-open svg { transform: scale(1.12); }
 
     .empty { color: var(--muted); text-align: center; padding: 2.5rem 0; }
-    .site-footer { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.8rem; padding-block: 2.5rem; border-top: 1px solid var(--line); margin-top: 2rem; }
+
+    /* ── writing on a wall ── */
+    .wall-section { background: #f7f2e6; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-block: 3rem; }
+    .wall-grid { columns: 3 15rem; column-gap: 1.2rem; margin-top: 1.4rem; }
+    .snip { break-inside: avoid; margin: 0 0 1.2rem; }
+    .snip-paper { position: relative; background: #fffef9; border: 1px solid var(--line); border-radius: 3px; padding: 1.15rem 1.2rem 1rem; box-shadow: 0 6px 15px rgba(25,26,30,0.08); transform: rotate(var(--rot)); transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease); }
+    .snip-paper:hover { transform: rotate(0deg) translateY(-4px); box-shadow: 0 14px 28px rgba(25,26,30,0.13); }
+    .pin { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 11px; height: 11px; border-radius: 50%; background: var(--accent); box-shadow: 0 2px 4px rgba(25,26,30,0.35), inset 0 -2px 2px rgba(0,0,0,0.2); }
+    .snip blockquote { font-family: var(--serif); font-style: italic; font-size: 1.06rem; line-height: 1.45; color: var(--ink); }
+    .snip figcaption { margin-top: 0.75rem; font-size: 0.72rem; letter-spacing: 0.05em; color: var(--muted); }
+
+    .site-footer { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.8rem; padding-block: 2.5rem; border-top: 1px solid var(--line); }
+
+    /* ── drive preview overlay ── */
+    .modal[hidden] { display: none; }
+    .modal { position: fixed; inset: 0; z-index: 50; }
+    .modal-backdrop { position: absolute; inset: 0; background: rgba(20,20,26,0.55); opacity: 0; transition: opacity 0.2s ease; }
+    .modal.open .modal-backdrop { opacity: 1; }
+    .modal-panel { position: relative; z-index: 1; width: min(62rem, 94vw); height: 92vh; margin: 4vh auto; background: var(--surface); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,0.4); opacity: 0; transform: translateY(14px) scale(0.985); transition: opacity 0.25s var(--ease), transform 0.25s var(--ease); }
+    .modal.open .modal-panel { opacity: 1; transform: none; }
+    .modal-head { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line); background: var(--bg); }
+    .modal-title { flex: 1; font-family: var(--serif); font-size: 1.02rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .modal-btn { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--mono); font-size: 0.78rem; text-decoration: none; color: var(--surface); background: var(--primary); padding: 0.45rem 0.8rem; border-radius: 999px; white-space: nowrap; transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease); }
+    .modal-btn svg { width: 0.85rem; height: 0.85rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .modal-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(35,56,111,0.25); }
+    .modal-close { display: grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; cursor: pointer; color: var(--muted); transition: background 0.15s, color 0.15s, transform 0.15s; }
+    .modal-close svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+    .modal-close:hover { background: var(--bg); color: var(--ink); transform: rotate(90deg); }
+    #modal-frame { flex: 1; width: 100%; border: 0; background: #f1efe8; }
 
     @media (max-width: 640px) {
       .hero { grid-template-columns: 1fr; gap: 1.4rem; padding-block: 3rem 1.2rem; }
       .avatar-wrap, .avatar { width: 112px; height: 112px; }
+      .modal-panel { width: 100vw; height: 100vh; margin: 0; border-radius: 0; }
+      .modal-title { font-size: 0.9rem; }
     }
   </style>
 </Base>
