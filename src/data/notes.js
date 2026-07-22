@@ -31,27 +31,9 @@ export const subjects = [
 
 export const notes = [
   {
-    title: "Real Analysis — Full Course Notes",
-    subject: "Higher Math",
-    description: "Sequences, series, continuity, and the ε–δ machinery, up to Riemann integration.",
-    link: "https://drive.google.com/file/d/EXAMPLE_ID/view",
-  },
-  {
-    title: "Putnam Problem Set & Solutions",
-    subject: "Competitive Math",
-    description: "Worked solutions to selected Putnam problems, grouped by topic.",
-    link: "https://drive.google.com/file/d/EXAMPLE_ID/view",
-  },
-  {
-    title: "Classical Mechanics",
-    subject: "Physics",
-    description: "Lagrangian and Hamiltonian mechanics with worked examples.",
-    link: "https://drive.google.com/file/d/EXAMPLE_ID/view",
-  },
-  {
-    title: "Organic Chemistry — Reaction Maps",
-    subject: "Chemistry",
-    description: "One-page summaries of the major reaction pathways.",
-    link: "https://drive.google.com/file/d/EXAMPLE_ID/view",
+    title: "Divisibility of Polynomials",
+    subject: "Competitive Mathematics",
+    description: "A short synopsis of a lecture held in May 2025 on the divisibility of polynomials I listened to. Rather short and brief; not much content, more problem-based.",
+    link: "https://drive.google.com/file/d/1PvDaa9pxbilNjn7R7Fr4XP4-gWM3TL5H/view?usp=sharing",
   },
 ];
