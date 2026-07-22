@@ -1,32 +1,65 @@
-# MathCosine — notes, writing, mathematics
+# MathCosine — notes & portfolio
 
-A static site (Astro) for publishing college course notes as PDFs, plus essays and an about page. Light "engineering pad" theme with a cosine-wave motif.
+A clean, static website. No login, no database. You add notes by pasting Google Drive links into one file, and visitors can search and filter them by subject.
 
-## How to add notes (the easy way)
+---
 
-Once deployed on Netlify with Identity enabled, go to **`yoursite.netlify.app/admin`**, log in, click **Course Notes → New Note**, fill in the form, and upload your PDF. It commits to this repo and Netlify redeploys automatically. No database, no server.
+## The only two files you'll ever edit
 
-## Deploying to Netlify (one-time setup, ~5 minutes)
+| I want to change… | Edit this file |
+| --- | --- |
+| My **notes** (add / remove / edit) | `src/data/notes.js` |
+| My **name, photo, bio, email, tagline** | `src/data/site.js` |
 
-1. On [netlify.com](https://app.netlify.com): **Add new site → Import an existing project → GitHub → this repo.** Build settings are auto-detected from `netlify.toml`.
-2. Enable the admin panel (Decap CMS):
-   - Site configuration → **Identity** → Enable Identity.
-   - Identity → Registration → set to **Invite only**, then invite yourself (your email).
-   - Identity → **Services → Git Gateway** → Enable.
-3. Accept the invite email, set a password, and visit `/admin`.
-4. If you use a custom domain or different site name, update `site_url` in `public/admin/config.yml` and `site` in `astro.config.mjs`.
+Both files are heavily commented — open them and you'll see exactly what to change. After you edit and commit, Netlify rebuilds the site automatically (about a minute).
 
-## Local development
+### How to add a note
+
+1. Upload your PDF to **Google Drive**.
+2. Right-click it → **Share** → set to **"Anyone with the link"** → **Copy link**.
+3. Open `src/data/notes.js`, copy one of the `{ ... }` blocks, paste it at the top of the list, and fill in your `title`, `subject`, `description`, and paste your link into `link`.
+
+The `subject` must be spelled exactly like one in the `subjects` list at the top of that file (e.g. `"Higher Math"`). To rename or add a subject, edit that `subjects` list.
+
+### How to add your photo
+
+1. Put your image in the **`public/`** folder (e.g. `public/me.jpg`).
+2. In `src/data/site.js`, set `photo: "/me.jpg"`.
+
+Until you do, a placeholder "MC" avatar is shown.
+
+### How to change any wording
+
+Everything on the page (name, tagline, bio, email) lives in `src/data/site.js`. The bio has a `[your school]` placeholder — replace it with your school.
+
+---
+
+## What's in this repo
+
+```
+src/
+  data/
+    site.js        ← your name, photo, bio, email  (EDIT ME)
+    notes.js       ← your notes + Google Drive links  (EDIT ME)
+  layouts/
+    Base.astro     ← page shell, fonts, colors
+  pages/
+    index.astro    ← the whole site (hero + searchable notes)
+public/
+  profile.svg      ← placeholder avatar (replace with your own photo)
+  favicon.svg
+netlify.toml       ← Netlify build settings
+```
+
+## Publishing to Netlify (one time)
+
+1. On [netlify.com](https://app.netlify.com): **Add new site → Import an existing project → GitHub → this repo.** Settings are auto-detected.
+2. Done. Every time you push a change (including edits made in the GitHub website), Netlify rebuilds and redeploys automatically — **you never re-import.**
+
+## Local development (optional)
 
 ```bash
 npm install
 npm run dev      # http://localhost:4321
 npm run build    # outputs to dist/
 ```
-
-## Adding content by hand (the git way)
-
-- Notes: drop a PDF in `public/pdfs/` and a markdown file in `src/content/notes/` (copy an existing one for the frontmatter).
-- Writing: markdown files in `src/content/writing/`.
-- About page: `src/pages/about.astro`.
-- **All site wording** (headings, intros, about bio, footer) lives in one file: `src/data/copy.json`. Edit it there, or in `/admin` under **Site Text**.

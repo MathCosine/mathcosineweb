@@ -1,119 +1,212 @@
 ---
 import Base from '../layouts/Base.astro';
-import { getCollection } from 'astro:content';
-import copy from '../data/copy.json';
+import { site } from '../data/site.js';
+import { subjects, notes } from '../data/notes.js';
 
-const notes = (await getCollection('notes')).sort((a, b) => +b.data.date - +a.data.date).slice(0, 3);
-const posts = (await getCollection('writing')).sort((a, b) => +b.data.date - +a.data.date).slice(0, 2);
-const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+// keep only well-formed notes
+const validNotes = notes.filter((n) => n && n.title && n.link);
+
+// muted color chip per subject (falls back to grey)
+const palette: Record<string, { bg: string; fg: string }> = {
+  'Competitive Math': { bg: '#fbeecd', fg: '#8a5a06' },
+  'Higher Math': { bg: '#e6ebfa', fg: '#2a4189' },
+  'Physics': { bg: '#ece6fa', fg: '#573a9c' },
+  'Biology': { bg: '#e3f2e8', fg: '#256b40' },
+  'Chemistry': { bg: '#fbe6ea', fg: '#a52c44' },
+};
+const chip = (s: string) => palette[s] ?? { bg: '#eeeae0', fg: '#5c616c' };
+
+const socials = Object.entries(site.socials).filter(([, v]) => v);
 ---
-<Base title="MathCosine — notes, writing, mathematics">
-  <section class="hero wrap">
-    <p class="mono kicker" data-reveal>{copy.home.kicker}</p>
-    <h1 data-reveal>{copy.home.heading_plain}<em>{copy.home.heading_accent}</em></h1>
-    <p class="lede" data-reveal>{copy.home.lede}</p>
-    <div class="hero-actions" data-reveal>
-      <a class="btn" href="/notes/">{copy.home.notes_button}</a>
-      <a class="btn ghost" href="/about/">{copy.home.about_button}</a>
-    </div>
-
-    <svg class="hero-wave" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
-      <path id="cos-path" d="M0 80 C 41.6 -20, 83.3 -20, 125 80 S 208.3 180, 250 80 S 333.3 -20, 375 80 S 458.3 180, 500 80 S 583.3 -20, 625 80 S 708.3 180, 750 80 S 833.3 -20, 875 80 S 958.3 180, 1000 80" />
-      <circle class="tracer" r="5">
-        <animateMotion dur="9s" repeatCount="indefinite">
-          <mpath href="#cos-path" />
-        </animateMotion>
-      </circle>
-    </svg>
-    <p class="mono axis-label">{copy.home.wave_caption}</p>
-  </section>
-
-  <section class="wrap section">
-    <div class="section-head" data-reveal>
-      <h2>{copy.home.latest_notes_heading}</h2>
-      <a class="mono see-all" href="/notes/">all notes →</a>
-    </div>
-    <div class="note-grid">
-      {notes.map((n) => (
-        <a class="note-card" href={`/notes/${n.slug}/`} data-reveal>
-          <p class="mono course">{n.data.course} · {n.data.semester}</p>
-          <h3>{n.data.title}</h3>
-          {n.data.description && <p class="desc">{n.data.description}</p>}
-          <span class="mono open-hint">open pdf ↗</span>
+<Base title={`${site.name} — Notes & Portfolio`} description={site.bio}>
+  <!-- ── HERO ─────────────────────────────────────────── -->
+  <header class="hero wrap">
+    <img class="avatar" src={site.photo} alt={`${site.name} profile photo`} width="150" height="150" data-reveal />
+    <div class="hero-text">
+      <h1 data-reveal>{site.name}</h1>
+      <p class="tagline mono" data-reveal>{site.tagline}</p>
+      <p class="bio" data-reveal>{site.bio}</p>
+      <div class="hero-links" data-reveal>
+        <a class="btn" href={`mailto:${site.email}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 6l9 7 9-7"/></svg>
+          {site.email}
         </a>
-      ))}
+        {socials.map(([name, url]) => (
+          <a class="btn ghost" href={url} target="_blank" rel="noopener">{name}</a>
+        ))}
+      </div>
     </div>
+  </header>
+
+  <svg class="divider" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 20 C50 2 100 38 150 20 S250 2 300 20 S400 38 450 20 S550 2 600 20 S700 38 750 20 S850 2 900 20 S1000 38 1050 20 S1150 2 1200 20" />
+  </svg>
+
+  <!-- ── NOTES ────────────────────────────────────────── -->
+  <section class="wrap notes-section">
+    <div class="section-head" data-reveal>
+      <h2>Notes</h2>
+      <p class="count mono" id="count"></p>
+    </div>
+
+    <div class="controls" data-reveal>
+      <div class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="search" placeholder="Search notes…" autocomplete="off" aria-label="Search notes" />
+      </div>
+      <div class="chips" role="tablist" aria-label="Filter by subject">
+        <button class="chip is-on" data-subject="all">All</button>
+        {subjects.map((s) => <button class="chip" data-subject={s}>{s}</button>)}
+      </div>
+    </div>
+
+    <div class="grid" id="grid">
+      {validNotes.map((n) => {
+        const c = chip(n.subject);
+        const text = `${n.title} ${n.description ?? ''} ${n.subject}`.toLowerCase();
+        return (
+          <a class="card" href={n.link} target="_blank" rel="noopener"
+             data-subject={n.subject} data-text={text} data-reveal>
+            <span class="card-tag mono" style={`background:${c.bg};color:${c.fg}`}>{n.subject}</span>
+            <h3>{n.title}</h3>
+            {n.description && <p class="card-desc">{n.description}</p>}
+            <span class="card-open mono">Open in Drive
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7 M9 7h8v8"/></svg>
+            </span>
+          </a>
+        );
+      })}
+    </div>
+
+    <p class="empty" id="empty" hidden>No notes match your search yet.</p>
   </section>
 
-  <section class="wrap section">
-    <div class="section-head" data-reveal>
-      <h2>{copy.home.recent_writing_heading}</h2>
-      <a class="mono see-all" href="/writing/">all posts →</a>
-    </div>
-    {posts.map((p) => (
-      <a class="post-row" href={`/writing/${p.slug}/`} data-reveal>
-        <span class="mono date">{fmt(p.data.date)}</span>
-        <span class="post-title">{p.data.title}</span>
-        <span class="mono arrow">→</span>
-      </a>
-    ))}
-  </section>
+  <footer class="wrap site-footer">
+    <p class="mono">© <span id="year"></span> {site.name}</p>
+    <p class="mono">y = cos(x)</p>
+  </footer>
+
+  <script>
+    document.getElementById('year')!.textContent = String(new Date().getFullYear());
+
+    const search = document.getElementById('search') as HTMLInputElement;
+    const chips = document.querySelectorAll<HTMLButtonElement>('.chip');
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('.card'));
+    const empty = document.getElementById('empty')!;
+    const count = document.getElementById('count')!;
+    let subject = 'all';
+
+    function apply() {
+      const q = search.value.trim().toLowerCase();
+      let shown = 0;
+      cards.forEach((card) => {
+        const okSubject = subject === 'all' || card.dataset.subject === subject;
+        const okText = !q || card.dataset.text!.includes(q);
+        const show = okSubject && okText;
+        card.style.display = show ? '' : 'none';
+        if (show) shown++;
+      });
+      empty.hidden = shown !== 0;
+      count.textContent = `${shown} note${shown === 1 ? '' : 's'}`;
+    }
+
+    search.addEventListener('input', apply);
+    chips.forEach((c) =>
+      c.addEventListener('click', () => {
+        chips.forEach((x) => x.classList.toggle('is-on', x === c));
+        subject = c.dataset.subject!;
+        apply();
+      })
+    );
+    apply();
+  </script>
 
   <style>
-    .hero { padding-block: 5rem 2rem; text-align: left; }
-    .kicker { color: var(--red); }
-    .hero h1 {
-      font-size: clamp(3.2rem, 9vw, 6.5rem); font-weight: 620; margin: 0.4rem 0 1rem;
+    /* ── hero ── */
+    .hero {
+      display: grid; grid-template-columns: 150px 1fr; gap: 2.4rem;
+      align-items: start; padding-block: 4.5rem 2.5rem;
     }
-    .hero h1 em { font-style: italic; color: var(--blue); }
-    .lede { max-width: 34rem; font-size: 1.2rem; color: var(--ink-soft); }
-    .hero-actions { display: flex; gap: 1rem; margin-top: 1.8rem; flex-wrap: wrap; }
-    .hero-wave { width: 100%; height: 110px; margin-top: 3rem; overflow: visible; }
-    .hero-wave path {
-      fill: none; stroke: var(--blue); stroke-width: 2.5;
-      stroke-dasharray: 2400; stroke-dashoffset: 2400;
-      animation: draw 2.4s var(--ease-out) 0.3s forwards;
+    .avatar {
+      width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
+      border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(25,26,30,0.08);
+      background: var(--surface);
     }
-    .tracer { fill: var(--red); }
-    @keyframes draw { to { stroke-dashoffset: 0; } }
-    @media (prefers-reduced-motion: reduce) { .hero-wave path { animation: none; stroke-dashoffset: 0; } }
-    .axis-label { color: var(--ink-soft); text-align: right; }
+    .hero-text h1 { font-size: clamp(2.4rem, 6vw, 3.4rem); }
+    .tagline { color: var(--primary-soft); font-size: 0.85rem; margin-top: 0.5rem; letter-spacing: 0.01em; }
+    .bio { color: var(--muted); max-width: 42rem; margin-top: 1.1rem; font-size: 1.08rem; }
+    .hero-links { display: flex; gap: 0.7rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.92rem; text-decoration: none; color: var(--surface);
+      background: var(--primary); padding: 0.55rem 1rem; border-radius: 999px;
+      border: 1px solid var(--primary);
+      transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), background 0.18s;
+    }
+    .btn svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(35,56,111,0.22); }
+    .btn.ghost { background: transparent; color: var(--primary); text-transform: capitalize; }
+    .btn.ghost:hover { background: #eef1f9; }
 
-    .section { padding-block: 3rem; }
-    .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.6rem; border-bottom: 2px solid var(--ink); padding-bottom: 0.5rem; }
-    .see-all { color: var(--ink-soft); text-decoration: none; }
-    .see-all:hover { color: var(--red); }
+    .divider { display: block; width: 100%; height: 32px; margin: 1rem 0 0; }
+    .divider path { fill: none; stroke: var(--line); stroke-width: 2; }
 
-    .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1.2rem; }
-    .note-card {
-      display: flex; flex-direction: column; gap: 0.5rem;
-      background: #fffdf8; border: 1px solid var(--rule); border-radius: 3px;
+    /* ── notes ── */
+    .notes-section { padding-block: 2rem 3rem; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; }
+    .section-head h2 { font-size: 1.9rem; }
+    .count { color: var(--muted); font-size: 0.82rem; }
+
+    .controls {
+      position: sticky; top: 0; z-index: 5;
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(6px);
+      padding-block: 1rem; margin-top: 0.8rem;
+      display: flex; flex-direction: column; gap: 0.9rem;
+    }
+    .search { position: relative; }
+    .search svg { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); width: 1.1rem; height: 1.1rem; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+    .search input {
+      width: 100%; font: inherit; font-size: 1rem; color: var(--ink);
+      padding: 0.7rem 1rem 0.7rem 2.6rem;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search input:focus { outline: none; border-color: var(--primary-soft); box-shadow: 0 0 0 3px rgba(35,56,111,0.1); }
+
+    .chips { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      font: inherit; font-size: 0.86rem; white-space: nowrap; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+      padding: 0.35rem 0.9rem; color: var(--muted);
+      transition: all 0.18s var(--ease);
+    }
+    .chip:hover { border-color: var(--primary-soft); color: var(--ink); }
+    .chip.is-on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1.1rem; margin-top: 0.6rem; }
+    .card {
+      display: flex; flex-direction: column; gap: 0.55rem;
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
       padding: 1.3rem; text-decoration: none; color: var(--ink);
-      box-shadow: 0 1px 0 var(--rule);
-      transition: transform 0.22s var(--ease-out), box-shadow 0.22s var(--ease-out), border-color 0.22s;
-      position: relative; overflow: hidden;
+      transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s;
     }
-    .note-card::before {
-      content: ''; position: absolute; inset: 0 auto 0 0; width: 3px;
-      background: var(--red); transform: scaleY(0); transform-origin: top;
-      transition: transform 0.28s var(--ease-out);
-    }
-    .note-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(28,26,22,0.09); border-color: var(--gold); }
-    .note-card:hover::before { transform: scaleY(1); }
-    .course { color: var(--blue); }
-    .note-card h3 { font-size: 1.25rem; }
-    .desc { color: var(--ink-soft); font-size: 0.95rem; }
-    .open-hint { margin-top: auto; color: var(--red); opacity: 0; transform: translateX(-6px); transition: opacity 0.22s, transform 0.22s var(--ease-out); }
-    .note-card:hover .open-hint { opacity: 1; transform: none; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(25,26,30,0.1); border-color: #d8d3c6; }
+    .card-tag { align-self: flex-start; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 999px; }
+    .card h3 { font-size: 1.2rem; }
+    .card-desc { color: var(--muted); font-size: 0.92rem; }
+    .card-open { margin-top: auto; padding-top: 0.4rem; color: var(--primary); font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem; opacity: 0.75; transition: gap 0.2s var(--ease), opacity 0.2s; }
+    .card-open svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .card:hover .card-open { opacity: 1; gap: 0.6rem; }
 
-    .post-row {
-      display: grid; grid-template-columns: 7rem 1fr auto; align-items: baseline; gap: 1rem;
-      padding: 1rem 0.4rem; border-bottom: 1px dashed var(--rule);
-      text-decoration: none; color: var(--ink); transition: background 0.2s, padding-left 0.25s var(--ease-out);
+    .empty { color: var(--muted); text-align: center; padding: 2.5rem 0; }
+
+    .site-footer { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.8rem; padding-block: 2.5rem; border-top: 1px solid var(--line); margin-top: 2rem; }
+
+    @media (max-width: 640px) {
+      .hero { grid-template-columns: 1fr; gap: 1.4rem; padding-block: 3rem 1.5rem; text-align: left; }
+      .avatar { width: 110px; height: 110px; }
     }
-    .post-row:hover { background: var(--paper-deep); padding-left: 1rem; }
-    .post-title { font-family: var(--serif); font-size: 1.3rem; }
-    .date { color: var(--ink-soft); }
-    .arrow { color: var(--red); }
   </style>
 </Base>
