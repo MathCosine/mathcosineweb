@@ -12,4 +12,5 @@
 
 export const wall = [
   { date: "2026-07-20", text: "Woah, the sky is really pretty today." },
+  { date: "2026-07-23", text: "Every normal, previously indifferent, entity looks so much more surreal and important when you know you will not be returning to them for quite a while. " },
 ];
